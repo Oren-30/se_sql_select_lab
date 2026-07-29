@@ -1,208 +1,82 @@
 import sqlite3
 import pandas as pd
 
-# Connect to database
+# Connect
 conn = sqlite3.connect("data.sqlite")
 
 
-# ==========================
-# Part 1: Join and Filter
-# ==========================
-
-df_boston = pd.read_sql("""
-SELECT
-    e.firstName,
-    e.lastName
-FROM employees e
-JOIN offices o
-ON e.officeCode = o.officeCode
-WHERE o.city = 'Boston';
+# STEP 2
+df_first_five = pd.read_sql("""
+SELECT employeeNumber, lastName
+FROM employees
 """, conn)
 
 
-df_zero_emp = pd.read_sql("""
-SELECT
-    o.officeCode,
-    o.city,
-    o.state
-FROM offices o
-LEFT JOIN employees e
-ON o.officeCode = e.officeCode
-WHERE e.employeeNumber IS NULL;
+# STEP 3
+df_five_reverse = pd.read_sql("""
+SELECT lastName, employeeNumber
+FROM employees
 """, conn)
 
 
-
-# ==========================
-# Part 2: Type of Join
-# ==========================
-
-df_employee = pd.read_sql("""
-SELECT
-    e.firstName,
-    e.lastName,
-    o.city,
-    o.state
-FROM employees e
-LEFT JOIN offices o
-ON e.officeCode = o.officeCode
-ORDER BY e.firstName, e.lastName;
+# STEP 4
+df_alias = pd.read_sql("""
+SELECT lastName, employeeNumber AS ID
+FROM employees
 """, conn)
 
 
-# Alias
-df_contacts = df_employee.copy()
-
-
-
-df_no_orders = pd.read_sql("""
-SELECT
-    c.contactFirstName,
-    c.contactLastName,
-    c.phone,
-    c.salesRepEmployeeNumber
-FROM customers c
-LEFT JOIN orders o
-ON c.customerNumber = o.customerNumber
-WHERE o.orderNumber IS NULL
-ORDER BY c.contactLastName;
+# STEP 5
+df_executive = pd.read_sql("""
+SELECT 
+    firstName,
+    lastName,
+    jobTitle,
+    CASE
+        WHEN jobTitle = 'President'
+          OR jobTitle = 'VP Sales'
+          OR jobTitle = 'VP Marketing'
+        THEN 'Executive'
+        ELSE 'Not Executive'
+    END AS role
+FROM employees
 """, conn)
 
 
-
-# ==========================
-# Part 3: Built-in Function
-# ==========================
-
-df_payment = pd.read_sql("""
-SELECT
-    c.contactFirstName,
-    c.contactLastName,
-    p.amount,
-    p.paymentDate
-FROM customers c
-JOIN payments p
-ON c.customerNumber = p.customerNumber
-ORDER BY CAST(p.amount AS DECIMAL) DESC;
+# STEP 6
+df_name_length = pd.read_sql("""
+SELECT LENGTH(lastName) AS name_length
+FROM employees
 """, conn)
 
 
-
-# ==========================
-# Part 4: Joining and Grouping
-# ==========================
-
-df_credit = pd.read_sql("""
-SELECT
-    e.employeeNumber,
-    e.firstName,
-    e.lastName,
-    COUNT(c.customerNumber) AS numcustomers
-FROM employees e
-JOIN customers c
-ON e.employeeNumber = c.salesRepEmployeeNumber
-GROUP BY
-    e.employeeNumber,
-    e.firstName,
-    e.lastName
-HAVING AVG(c.creditLimit) > 90000
-ORDER BY numcustomers DESC;
+# STEP 7
+df_short_title = pd.read_sql("""
+SELECT SUBSTR(jobTitle, 1, 2) AS short_title
+FROM employees
 """, conn)
 
 
+# STEP 8
+sum_total_price = pd.read_sql("""
+SELECT ROUND(priceEach * quantityOrdered) AS total_price
+FROM orderDetails
+""", conn).sum()
 
-df_product_sold = pd.read_sql("""
-SELECT
-    p.productName,
-    COUNT(od.orderNumber) AS numorders,
-    SUM(od.quantityOrdered) AS totalunits
-FROM products p
-JOIN orderdetails od
-ON p.productCode = od.productCode
-GROUP BY
-    p.productCode,
-    p.productName
-ORDER BY totalunits DESC;
+
+# STEP 9
+df_day_month_year = pd.read_sql("""
+SELECT 
+    orderDate,
+    STRFTIME('%d', orderDate) AS day,
+    STRFTIME('%m', orderDate) AS month,
+    STRFTIME('%Y', orderDate) AS year
+FROM orders
 """, conn)
 
 
-
-# ==========================
-# Part 5: Multiple Joins
-# ==========================
-
-# Product purchaser count
-df_total_customers = pd.read_sql("""
-SELECT
-    p.productName,
-    p.productCode,
-    COUNT(DISTINCT o.customerNumber) AS numpurchasers
-FROM products p
-JOIN orderdetails od
-ON p.productCode = od.productCode
-JOIN orders o
-ON od.orderNumber = o.orderNumber
-GROUP BY
-    p.productCode,
-    p.productName
-ORDER BY numpurchasers DESC;
-""", conn)
+conn.close()
 
 
 
-# Customers per office
-df_customers = pd.read_sql("""
-SELECT
-    COUNT(c.customerNumber) AS n_customers,
-    o.officeCode,
-    o.city
-FROM offices o
-JOIN employees e
-ON o.officeCode = e.officeCode
-JOIN customers c
-ON e.employeeNumber = c.salesRepEmployeeNumber
-GROUP BY
-    o.officeCode,
-    o.city;
-""", conn)
 
-
-# Alias if required
-df_office = df_customers.copy()
-
-
-
-# ==========================
-# Part 6: Subquery
-# ==========================
-
-df_under_20 = pd.read_sql("""
-SELECT DISTINCT
-    e.employeeNumber,
-    e.firstName,
-    e.lastName,
-    o.city,
-    o.officeCode
-FROM employees e
-JOIN offices o
-ON e.officeCode = o.officeCode
-JOIN customers c
-ON e.employeeNumber = c.salesRepEmployeeNumber
-JOIN orders ord
-ON c.customerNumber = ord.customerNumber
-JOIN orderdetails od
-ON ord.orderNumber = od.orderNumber
-WHERE od.productCode IN
-(
-    SELECT productCode
-    FROM orderdetails od2
-    JOIN orders ord2
-    ON od2.orderNumber = ord2.orderNumber
-    GROUP BY productCode
-    HAVING COUNT(DISTINCT ord2.customerNumber) < 20
-)
-ORDER BY e.lastName;
-""", conn)
-
-
-# Keep connection open for pytest
