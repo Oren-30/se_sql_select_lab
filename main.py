@@ -5,9 +5,10 @@ import pandas as pd
 conn = sqlite3.connect("data.sqlite")
 
 
+# ==========================
 # Part 1: Join and Filter
+# ==========================
 
-# Employees in Boston
 df_boston = pd.read_sql("""
 SELECT
     e.firstName,
@@ -19,7 +20,6 @@ WHERE o.city = 'Boston';
 """, conn)
 
 
-# Offices with zero employees
 df_zero_emp = pd.read_sql("""
 SELECT
     o.officeCode,
@@ -33,10 +33,11 @@ WHERE e.employeeNumber IS NULL;
 
 
 
+# ==========================
 # Part 2: Type of Join
+# ==========================
 
-# Employees and office details
-df_contacts = pd.read_sql("""
+df_employee = pd.read_sql("""
 SELECT
     e.firstName,
     e.lastName,
@@ -49,7 +50,10 @@ ORDER BY e.firstName, e.lastName;
 """, conn)
 
 
-# Customers without orders
+# Alias used by some tests
+df_contacts = df_employee.copy()
+
+
 df_no_orders = pd.read_sql("""
 SELECT
     c.contactFirstName,
@@ -65,7 +69,9 @@ ORDER BY c.contactLastName;
 
 
 
+# ==========================
 # Part 3: Built-in Function
+# ==========================
 
 df_payment = pd.read_sql("""
 SELECT
@@ -81,9 +87,10 @@ ORDER BY CAST(p.amount AS DECIMAL) DESC;
 
 
 
+# ==========================
 # Part 4: Joining and Grouping
+# ==========================
 
-# Employees with customers average credit limit > 90000
 df_credit = pd.read_sql("""
 SELECT
     e.employeeNumber,
@@ -102,7 +109,7 @@ ORDER BY numcustomers DESC;
 """, conn)
 
 
-# Product sales
+
 df_product_sold = pd.read_sql("""
 SELECT
     p.productName,
@@ -119,9 +126,10 @@ ORDER BY totalunits DESC;
 
 
 
+# ==========================
 # Part 5: Multiple Joins
+# ==========================
 
-# Product customer reach
 df_total_customers = pd.read_sql("""
 SELECT
     p.productName,
@@ -139,7 +147,11 @@ ORDER BY numpurchasers DESC;
 """, conn)
 
 
-# Customers per office
+# Alias expected by tests
+df_customers = df_total_customers.copy()
+
+
+
 df_office_customers = pd.read_sql("""
 SELECT
     COUNT(c.customerNumber) AS n_customers,
@@ -157,7 +169,9 @@ GROUP BY
 
 
 
+# ==========================
 # Part 6: Subquery
+# ==========================
 
 df_under_20 = pd.read_sql("""
 SELECT DISTINCT
@@ -184,7 +198,7 @@ WHERE od.productCode IN
     GROUP BY productCode
     HAVING COUNT(DISTINCT ord2.customerNumber) < 20
 )
-ORDER BY e.employeeNumber;
+ORDER BY e.lastName;
 """, conn)
 
 
