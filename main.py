@@ -50,8 +50,9 @@ ORDER BY e.firstName, e.lastName;
 """, conn)
 
 
-# Alias for tests
+# Alias
 df_contacts = df_employee.copy()
+
 
 
 df_no_orders = pd.read_sql("""
@@ -130,6 +131,7 @@ ORDER BY totalunits DESC;
 # Part 5: Multiple Joins
 # ==========================
 
+# Product purchaser count
 df_total_customers = pd.read_sql("""
 SELECT
     p.productName,
@@ -147,12 +149,9 @@ ORDER BY numpurchasers DESC;
 """, conn)
 
 
-# Alias for tests
-df_customers = df_total_customers.copy()
 
-
-
-df_office = pd.read_sql("""
+# Customers per office
+df_customers = pd.read_sql("""
 SELECT
     COUNT(c.customerNumber) AS n_customers,
     o.officeCode,
@@ -166,6 +165,10 @@ GROUP BY
     o.officeCode,
     o.city;
 """, conn)
+
+
+# Alias if required
+df_office = df_customers.copy()
 
 
 
