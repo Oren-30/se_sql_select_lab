@@ -50,7 +50,7 @@ ORDER BY e.firstName, e.lastName;
 """, conn)
 
 
-# Alias used by some tests
+# Alias for tests
 df_contacts = df_employee.copy()
 
 
@@ -147,12 +147,12 @@ ORDER BY numpurchasers DESC;
 """, conn)
 
 
-# Alias expected by tests
+# Alias for tests
 df_customers = df_total_customers.copy()
 
 
 
-df_office_customers = pd.read_sql("""
+df_office = pd.read_sql("""
 SELECT
     COUNT(c.customerNumber) AS n_customers,
     o.officeCode,
