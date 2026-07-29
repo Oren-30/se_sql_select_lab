@@ -1,15 +1,12 @@
 import sqlite3
 import pandas as pd
 
-# STEP 1
-# Connect to database
+# Connect database
 conn = sqlite3.connect("data.sqlite")
 
 
 # Part 1
-
-# Return employees in Boston
-df_boston_employees = pd.read_sql("""
+df_boston = pd.read_sql("""
 SELECT
     e.firstName,
     e.lastName,
@@ -21,24 +18,9 @@ WHERE o.city = 'Boston';
 """, conn)
 
 
-# Offices with zero employees
-df_empty_offices = pd.read_sql("""
-SELECT
-    o.officeCode,
-    o.city,
-    o.state
-FROM offices o
-LEFT JOIN employees e
-ON o.officeCode = e.officeCode
-WHERE e.employeeNumber IS NULL;
-""", conn)
-
-
 
 # Part 2
-
-# All employees and their office information
-df_employee_offices = pd.read_sql("""
+df_employee = pd.read_sql("""
 SELECT
     e.firstName,
     e.lastName,
@@ -51,26 +33,9 @@ ORDER BY e.firstName, e.lastName;
 """, conn)
 
 
-# Customers without orders
-df_customers_without_orders = pd.read_sql("""
-SELECT
-    c.contactFirstName,
-    c.contactLastName,
-    c.phone,
-    c.salesRepEmployeeNumber
-FROM customers c
-LEFT JOIN orders o
-ON c.customerNumber = o.customerNumber
-WHERE o.orderNumber IS NULL
-ORDER BY c.contactLastName;
-""", conn)
-
-
 
 # Part 3
-
-# Customer payments
-df_customer_payments = pd.read_sql("""
+df_payment = pd.read_sql("""
 SELECT
     c.contactFirstName,
     c.contactLastName,
@@ -85,9 +50,7 @@ ORDER BY CAST(p.amount AS DECIMAL) DESC;
 
 
 # Part 4
-
-# Employees with customers average credit limit > 90000
-df_credit_limit = pd.read_sql("""
+df_credit = pd.read_sql("""
 SELECT
     e.employeeNumber,
     e.firstName,
@@ -106,27 +69,8 @@ ORDER BY numcustomers DESC;
 
 
 
-# Product sales
-df_product_sales = pd.read_sql("""
-SELECT
-    p.productName,
-    COUNT(od.orderNumber) AS numorders,
-    SUM(od.quantityOrdered) AS totalunits
-FROM products p
-JOIN orderdetails od
-ON p.productCode = od.productCode
-GROUP BY
-    p.productCode,
-    p.productName
-ORDER BY totalunits DESC;
-""", conn)
-
-
-
 # Part 5
-
-# Product customer reach
-df_product_customers = pd.read_sql("""
+df_total_customers = pd.read_sql("""
 SELECT
     p.productName,
     p.productCode,
@@ -144,28 +88,8 @@ ORDER BY numpurchasers DESC;
 
 
 
-# Customers per office
-df_customers_per_office = pd.read_sql("""
-SELECT
-    COUNT(c.customerNumber) AS n_customers,
-    o.officeCode,
-    o.city
-FROM offices o
-JOIN employees e
-ON o.officeCode = e.officeCode
-JOIN customers c
-ON e.employeeNumber = c.salesRepEmployeeNumber
-GROUP BY
-    o.officeCode,
-    o.city;
-""", conn)
-
-
-
 # Part 6
-
-# Employees selling products ordered by fewer than 20 customers
-df_underperforming_products = pd.read_sql("""
+df_under_20 = pd.read_sql("""
 SELECT DISTINCT
     e.employeeNumber,
     e.firstName,
@@ -193,4 +117,4 @@ WHERE od.productCode IN
 """, conn)
 
 
-# Keep connection open for tests
+# Leave connection open for pytest
